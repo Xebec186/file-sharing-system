@@ -1,10 +1,13 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.List;
 
 public class Server {
 
-    static DataInputStream clientInput = null;
+    static DataInputStream dataInputStream = null;
+    static DataOutputStream dataOutputStream = null;
 
     public static void main(String[] args) {
         try(ServerSocket server = new ServerSocket(4000)) {
@@ -12,13 +15,22 @@ public class Server {
             Socket client = server.accept();
             System.out.println("Client connected");
 
-            clientInput = new DataInputStream(client.getInputStream());
+            dataInputStream = new DataInputStream(client.getInputStream());
+            dataOutputStream = new DataOutputStream(client.getOutputStream());
             String command = "";
 
-            while(!command.equals("exit")) {
-                command = clientInput.readUTF();
-                if(command.equals("UPLOAD")) {
-                    receiveFile();
+            while(!command.equals("EXIT")) {
+                command = dataInputStream.readUTF();
+                switch (command) {
+                    case "UPLOAD":
+                        receiveFile();
+                        break;
+                    case "LIST":
+                        sendFileNames();
+                        break;
+                    default:
+                        System.out.println("Client sent invalid option.");
+                        dataOutputStream.writeUTF("Invalid option. Valid options are UPLOAD, LIST, DOWNLOAD, EXIT");
                 }
             }
         } catch (IOException e) {
@@ -29,8 +41,8 @@ public class Server {
 
     private static void receiveFile() {
         try {
-            String fileName = clientInput.readUTF();
-            int fileLength = clientInput.readInt();
+            String fileName = dataInputStream.readUTF();
+            int fileLength = dataInputStream.readInt();
 
             // Check if the server folder exists and create if not
             File file = new File("server/" + fileName);
@@ -51,7 +63,7 @@ public class Server {
                 while (totalBytesRead < fileLength) {
                     // Safeguard against buffer overflow and calculate exact remaining bytes
                     int bytesToRead = Math.min(buffer.length, fileLength - totalBytesRead);
-                    int bytesRead = clientInput.read(buffer, 0, bytesToRead);
+                    int bytesRead = dataInputStream.read(buffer, 0, bytesToRead);
 
                     // Safeguard against unexpected stream closure (-1)
                     if (bytesRead == -1) {
@@ -70,5 +82,35 @@ public class Server {
             e.printStackTrace();
         }
 
+    }
+
+    private static void sendFileNames() {
+        // Check if the server folder exists and create if not
+        File serverFolder = new File("server");
+        if(!serverFolder.exists()) {
+            boolean isFolderCreated = serverFolder.mkdir();
+            if(!isFolderCreated) {
+                System.out.println("Server folder could not be created. Try creating it manually and try again");
+                return;
+            }
+        }
+
+        File[] files = serverFolder.listFiles();
+
+        if(files != null && files.length == 0) {
+            System.out.println("No files in server. Upload one first");
+            return;
+        }
+
+        List<String> fileNames = Arrays.stream(files)
+                .map(File::getName)
+                .toList();
+
+        try {
+            dataOutputStream.writeUTF(fileNames.toString());
+        } catch (IOException e) {
+            System.out.println("An error occurred in sending file names: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

@@ -7,11 +7,14 @@ public class Client {
     static Scanner scanner = null;
     static Socket socket = null;
     static DataOutputStream dataOutputStream = null;
+    static DataInputStream dataInputStream = null;
 
     public static void main(String[] args) {
         System.out.println("Connecting to server...");
         try {
             socket = new Socket("localhost", 4000);
+            dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            dataInputStream = new DataInputStream(socket.getInputStream());
             System.out.println("Connected to server successfully.\n");
 
             scanner = new Scanner(System.in);
@@ -31,10 +34,13 @@ public class Client {
                         uploadFile(path);
                         break;
                     case 2:
-                        displayServerFiles();
+                        listServerFiles();
+                        System.out.print("Enter name of file to download: ");
+                        String fileName = scanner.nextLine();
+                        downloadFile(fileName);
                         break;
                     case 3:
-                        dataOutputStream.writeUTF("exit");
+                        dataOutputStream.writeUTF("EXIT");
                         dataOutputStream.close();
                         socket.close();
                         break;
@@ -60,33 +66,14 @@ public class Client {
         System.out.print("Enter choice: ");
     }
 
-    private static void displayServerFiles() {
-        File serverFolder = new File("server");
-
-        if(!serverFolder.exists()) {
-            System.out.println("No file has been uploaded to server. Upload one first.\n");
-            return;
+    private static void listServerFiles() {
+        try {
+            dataOutputStream.writeUTF("LIST");
+            System.out.println(dataInputStream.readUTF());
+        } catch (IOException e) {
+            System.out.println("An error occurred in listing server files: " + e.getMessage());
+            e.printStackTrace();
         }
-
-        File[] files = serverFolder.listFiles();
-        if(files != null && files.length == 0) {
-            System.out.println("No file has been uploaded to server. Upload one first.\n");
-            return;
-        }
-
-        System.out.println("\nServer Files");
-        for(int i=0; i < files.length; i++) {
-            System.out.println((i+1) + ". " + files[i].getName());
-        }
-
-        System.out.print("Enter number of file to download: ");
-        int choice = scanner.nextInt();
-
-        // clear \n in buffer
-        scanner.nextLine();
-
-        File file = files[choice-1];
-        downloadFile(file);
     }
 
 
@@ -102,7 +89,6 @@ public class Client {
             byte[] fileBytes = fileInput.readAllBytes();
 
             // send header
-            dataOutputStream = new DataOutputStream(socket.getOutputStream());
             dataOutputStream.writeUTF("UPLOAD");
             dataOutputStream.writeUTF(file.getName());
             dataOutputStream.writeInt((int) file.length());
@@ -122,33 +108,7 @@ public class Client {
 
     }
 
-    private static void downloadFile(File file) {
-        System.out.println("\nDownloading " + file.getName() + "...");
-        try {
-            FileInputStream fileInputStream = new FileInputStream(file);
-            byte[] fileBytes = fileInputStream.readAllBytes();
-
-            File downloadedFile = new File("downloads/" + file.getName());
-            File downloadsFolder = downloadedFile.getParentFile();
-            if(downloadsFolder != null && !downloadsFolder.exists()) {
-                boolean isFolderCreated = downloadsFolder.mkdirs();
-                if(!isFolderCreated) {
-                    System.out.println("Failed to download file from server.");
-                    System.out.println("Downloads folder could not be created. Try creating it manually and try again");
-                    return;
-                }
-            }
-
-            downloadedFile.createNewFile();
-            FileOutputStream downloadedFileOutputStream = new FileOutputStream(downloadedFile);
-            downloadedFileOutputStream.write(fileBytes);
-
-            fileInputStream.close();
-            downloadedFileOutputStream.close();
-            System.out.println("File successfully downloaded to " + downloadedFile.getAbsolutePath() + "\n");
-        } catch (IOException e) {
-            System.out.println("An error occurred in downloading file: " + e.getMessage());
-            e.printStackTrace();
-        }
+    private static void downloadFile(String fileName) {
+        
     }
 }
