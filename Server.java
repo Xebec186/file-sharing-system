@@ -12,32 +12,44 @@ public class Server {
     public static void main(String[] args) {
         try(ServerSocket server = new ServerSocket(4000)) {
             System.out.println("Server started on port 4000. Awaiting connections...");
-            Socket client = server.accept();
-            System.out.println("Client connected");
+            while (true) {
+                try {
+                    Socket client = server.accept();
+                    System.out.println("Client connected");
 
-            dataInputStream = new DataInputStream(client.getInputStream());
-            dataOutputStream = new DataOutputStream(client.getOutputStream());
-            String command = "";
+                    dataInputStream = new DataInputStream(client.getInputStream());
+                    dataOutputStream = new DataOutputStream(client.getOutputStream());
+                    String command = "";
 
-            while(!command.equals("EXIT")) {
-                command = dataInputStream.readUTF();
-                switch (command) {
-                    case "UPLOAD":
-                        receiveFile();
-                        break;
-                    case "LIST":
-                        sendFileNames();
-                        break;
-                    case "DOWNLOAD":
-                        sendFile();
-                        break;
-                    default:
-                        System.out.println("Client sent invalid option.");
-                        dataOutputStream.writeUTF("Invalid option. Valid options are UPLOAD, LIST, DOWNLOAD, EXIT");
+                    while(!command.equals("EXIT")) {
+                        command = dataInputStream.readUTF();
+                        switch (command) {
+                            case "UPLOAD":
+                                receiveFile();
+                                break;
+                            case "LIST":
+                                sendFileNames();
+                                break;
+                            case "DOWNLOAD":
+                                sendFile();
+                                break;
+                            case "EXIT":
+                                break;
+                            default:
+                                System.out.println("Client sent invalid option.");
+                                dataOutputStream.writeUTF("Invalid option. Valid options are UPLOAD, LIST, DOWNLOAD, EXIT");
+                        }
+                    }
+                    client.close();
+                    System.out.println("Client disconnected");
+                } catch (EOFException e) {
+                    System.out.println("Client disconnected abruptly.");
+                } catch (IOException e) {
+                    System.out.println("Error handling client session: " + e.getMessage());
                 }
             }
         } catch (IOException e) {
-            System.out.println("Error occurred: " + e.getMessage());
+            System.out.println("Server error: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -93,21 +105,23 @@ public class Server {
         if(!serverFolder.exists()) {
             boolean isFolderCreated = serverFolder.mkdir();
             if(!isFolderCreated) {
-                System.out.println("Server folder could not be created. Try creating it manually and try again");
+                System.out.println("Server folder could not be created.");
+                try {
+                    dataOutputStream.writeUTF("[]");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 return;
             }
         }
 
         File[] files = serverFolder.listFiles();
-
-        if(files != null && files.length == 0) {
-            System.out.println("No files in server. Upload one first");
-            return;
+        List<String> fileNames = List.of();
+        if (files != null) {
+            fileNames = Arrays.stream(files)
+                    .map(File::getName)
+                    .toList();
         }
-
-        List<String> fileNames = Arrays.stream(files)
-                .map(File::getName)
-                .toList();
 
         try {
             dataOutputStream.writeUTF(fileNames.toString());
@@ -121,17 +135,21 @@ public class Server {
         try {
             String fileName = dataInputStream.readUTF();
             File file = new File("server/" + fileName);
-            if(!file.exists()) {
-                dataOutputStream.writeUTF("File does not exist on server with name: " + fileName);
+            if(!file.exists() || !file.isFile()) {
+                dataOutputStream.writeInt(-1);
                 return;
             }
 
-            FileInputStream fileInputStream = new FileInputStream(file);
-            byte[] fileBytes = fileInputStream.readAllBytes();
             dataOutputStream.writeInt((int) file.length());
-            dataOutputStream.write(fileBytes);
 
-            fileInputStream.close();
+            try (FileInputStream fileInputStream = new FileInputStream(file)) {
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                    dataOutputStream.write(buffer, 0, bytesRead);
+                }
+            }
+            dataOutputStream.flush();
         } catch (IOException e) {
             System.out.println("An error occurred in sending file to client: " + e.getMessage());
             e.printStackTrace();

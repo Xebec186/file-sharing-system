@@ -35,9 +35,11 @@ public class Client {
                         break;
                     case 2:
                         listServerFiles();
-                        System.out.print("Enter name of file to download: ");
+                        System.out.print("Enter name of file to download (or press Enter to cancel): ");
                         String fileName = scanner.nextLine();
-                        downloadFile(fileName);
+                        if (!fileName.trim().isEmpty()) {
+                            downloadFile(fileName);
+                        }
                         break;
                     case 3:
                         dataOutputStream.writeUTF("EXIT");
@@ -53,9 +55,6 @@ public class Client {
             System.out.println("An error occurred: " + e.getMessage());
             e.printStackTrace();
         }
-
-
-
     }
 
     private static void displayMenu() {
@@ -79,39 +78,43 @@ public class Client {
 
     private static void uploadFile(String path) {
         File file = new File(path);
-        if(!file.exists()) {
-            System.out.println("File with path " + path + " does not exist.\n");
+        if(!file.exists() || !file.isFile()) {
+            System.out.println("File with path " + path + " does not exist or is not a file.\n");
             return;
         }
         try {
-            // Get client file bytes
-            FileInputStream fileInput = new FileInputStream(file);
-            byte[] fileBytes = fileInput.readAllBytes();
-
             // send header
             dataOutputStream.writeUTF("UPLOAD");
             dataOutputStream.writeUTF(file.getName());
             dataOutputStream.writeInt((int) file.length());
 
-            // send actual file content
-            dataOutputStream.write(fileBytes);
+            // stream actual file content
+            try (FileInputStream fileInput = new FileInputStream(file)) {
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = fileInput.read(buffer)) != -1) {
+                    dataOutputStream.write(buffer, 0, bytesRead);
+                }
+            }
 
             dataOutputStream.flush();
-
-            // close stream to free up resources
-            fileInput.close();
             System.out.println("File uploaded successfully\n");
         } catch (IOException e) {
             System.out.println("An error occurred in uploading file: " + e.getMessage());
             e.printStackTrace();
         }
-
     }
 
     private static void downloadFile(String fileName) {
         try {
             dataOutputStream.writeUTF("DOWNLOAD");
             dataOutputStream.writeUTF(fileName);
+
+            int fileLength = dataInputStream.readInt();
+            if (fileLength == -1) {
+                System.out.println("File does not exist on server with name: " + fileName + "\n");
+                return;
+            }
 
             File file = new File("client/" + fileName);
             File clientFolder = file.getParentFile();
@@ -126,7 +129,6 @@ public class Client {
 
             try(FileOutputStream fileOutputStream = new FileOutputStream(file)) {
                 byte[] buffer = new byte[4096];
-                int fileLength = dataInputStream.readInt();
                 int totalBytesRead = 0;
 
                 while(totalBytesRead < fileLength) {
@@ -140,7 +142,7 @@ public class Client {
                 }
             }
 
-            System.out.println("File successfully downloaded to " + file.getAbsolutePath());
+            System.out.println("File successfully downloaded to " + file.getAbsolutePath() + "\n");
         } catch (IOException e) {
             System.out.println("An error occurred in downloading file: " + e.getMessage());
             e.printStackTrace();
