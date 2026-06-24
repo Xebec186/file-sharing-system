@@ -6,19 +6,23 @@ import java.util.List;
 
 public class Server {
 
+    // 50 MB Limit (50 * 1024 * 1024 bytes)
+    private static final int MAX_FILE_SIZE = 50 * 1024 * 1024;
+
     static DataInputStream dataInputStream = null;
     static DataOutputStream dataOutputStream = null;
+    static Socket socket = null;
 
     public static void main(String[] args) {
         try(ServerSocket server = new ServerSocket(4000)) {
             System.out.println("Server started on port 4000. Awaiting connections...");
             while (true) {
                 try {
-                    Socket client = server.accept();
+                    socket = server.accept();
                     System.out.println("Client connected");
 
-                    dataInputStream = new DataInputStream(client.getInputStream());
-                    dataOutputStream = new DataOutputStream(client.getOutputStream());
+                    dataInputStream = new DataInputStream(socket.getInputStream());
+                    dataOutputStream = new DataOutputStream(socket.getOutputStream());
                     String command = "";
 
                     while(!command.equals("EXIT")) {
@@ -33,14 +37,12 @@ public class Server {
                             case "DOWNLOAD":
                                 sendFile();
                                 break;
-                            case "EXIT":
-                                break;
                             default:
                                 System.out.println("Client sent invalid option.");
                                 dataOutputStream.writeUTF("Invalid option. Valid options are UPLOAD, LIST, DOWNLOAD, EXIT");
                         }
                     }
-                    client.close();
+                    socket.close();
                     System.out.println("Client disconnected");
                 } catch (EOFException e) {
                     System.out.println("Client disconnected abruptly.");
@@ -50,7 +52,6 @@ public class Server {
             }
         } catch (IOException e) {
             System.out.println("Server error: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -58,6 +59,13 @@ public class Server {
         try {
             String fileName = dataInputStream.readUTF();
             int fileLength = dataInputStream.readInt();
+
+            // Validate file size limit
+            if (fileLength > MAX_FILE_SIZE) {
+                socket.close();
+                // Immediately close the connection to stop the transfer
+                throw new IOException("File size limit exceeded (" + MAX_FILE_SIZE + " bytes). Connection closed.");
+            }
 
             // Check if the server folder exists and create if not
             File file = new File("server/" + fileName);
@@ -94,7 +102,6 @@ public class Server {
             System.out.println("File successfully received and saved to " + file.getAbsolutePath());
         } catch (IOException e) {
             System.out.println("Error occurred in receiving file from client: " + e.getMessage());
-            e.printStackTrace();
         }
 
     }
@@ -109,7 +116,7 @@ public class Server {
                 try {
                     dataOutputStream.writeUTF("[]");
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    System.out.println("An error occurred in sending file names: " + e.getMessage());
                 }
                 return;
             }
@@ -127,7 +134,6 @@ public class Server {
             dataOutputStream.writeUTF(fileNames.toString());
         } catch (IOException e) {
             System.out.println("An error occurred in sending file names: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -152,7 +158,6 @@ public class Server {
             dataOutputStream.flush();
         } catch (IOException e) {
             System.out.println("An error occurred in sending file to client: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 }

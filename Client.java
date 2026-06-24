@@ -4,6 +4,9 @@ import java.util.Scanner;
 
 public class Client {
 
+    // 50 MB Limit (50 * 1024 * 1024 bytes)
+    private static final int MAX_FILE_SIZE = 50 * 1024 * 1024;
+
     static Scanner scanner = null;
     static Socket socket = null;
     static DataOutputStream dataOutputStream = null;
@@ -53,7 +56,6 @@ public class Client {
 
         } catch (IOException e) {
             System.out.println("An error occurred: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -71,7 +73,6 @@ public class Client {
             System.out.println(dataInputStream.readUTF());
         } catch (IOException e) {
             System.out.println("An error occurred in listing server files: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -82,6 +83,13 @@ public class Client {
             System.out.println("File with path " + path + " does not exist or is not a file.\n");
             return;
         }
+
+        // Validate file size before uploading
+        if(file.length() > MAX_FILE_SIZE) {
+            System.out.println("Error: File exceeds the maximum size limit of " + (MAX_FILE_SIZE / (1024 * 1024)) + "MB.\n");
+            return;
+        }
+
         try {
             // send header
             dataOutputStream.writeUTF("UPLOAD");
@@ -101,7 +109,6 @@ public class Client {
             System.out.println("File uploaded successfully\n");
         } catch (IOException e) {
             System.out.println("An error occurred in uploading file: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -145,7 +152,6 @@ public class Client {
             System.out.println("File successfully downloaded to " + file.getAbsolutePath() + "\n");
         } catch (IOException e) {
             System.out.println("An error occurred in downloading file: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 }
