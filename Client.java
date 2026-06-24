@@ -123,7 +123,7 @@ public class Client {
                 return;
             }
 
-            File file = new File("client/" + fileName);
+            File file = new File("client_" + socket.getLocalPort() + "/" + fileName);
             File clientFolder = file.getParentFile();
             if(!clientFolder.exists()) {
                boolean isFolderCreated = clientFolder.mkdirs();

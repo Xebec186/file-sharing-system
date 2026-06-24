@@ -12,7 +12,7 @@ public class Server {
         ExecutorService threadPool = Executors.newCachedThreadPool();
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Multi-threaded Server started on port " + PORT + "...");
+            System.out.println("Server started on port " + PORT + "...");
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
