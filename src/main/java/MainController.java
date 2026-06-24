@@ -51,6 +51,9 @@ public class MainController {
         fileNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
         fileSizeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSize()));
 
+        // Use constrained resize policy to fill the entire table width and eliminate the gray empty space
+        fileTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
         // Set up filtering
         filteredFileList = new FilteredList<>(masterFileList, p -> true);
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -195,7 +198,21 @@ public class MainController {
                     if (!content.trim().isEmpty()) {
                         String[] items = content.split(", ");
                         for (String item : items) {
-                            files.add(new FileItem(item, "Remote File", -1));
+                            String name = item;
+                            String sizeStr = "Remote File";
+                            long sizeBytes = -1;
+                            
+                            int colonIndex = item.lastIndexOf(':');
+                            if (colonIndex != -1) {
+                                name = item.substring(0, colonIndex);
+                                try {
+                                    sizeBytes = Long.parseLong(item.substring(colonIndex + 1));
+                                    sizeStr = formatFileSize(sizeBytes);
+                                } catch (NumberFormatException e) {
+                                    // Keep default values if format is invalid
+                                }
+                            }
+                            files.add(new FileItem(name, sizeStr, sizeBytes));
                         }
                     }
                 }
@@ -305,16 +322,20 @@ public class MainController {
 
         String fileName = selectedItem.getName();
 
-        // Default initial directory is client_<port>
+        // Default initial directory path (not pre-created to avoid empty folders)
         String defaultDirName = "client_" + socket.getLocalPort();
         File defaultDir = new File(defaultDirName);
-        if (!defaultDir.exists()) {
-            defaultDir.mkdirs();
-        }
 
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Choose Save Destination");
-        directoryChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        
+        // Open the chooser in defaultDir if it exists, otherwise fall back to user.dir
+        if (defaultDir.exists() && defaultDir.isDirectory()) {
+            directoryChooser.setInitialDirectory(defaultDir);
+        } else {
+            directoryChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        }
+        
         File selectedDir = directoryChooser.showDialog(stage);
 
         if (selectedDir == null) {
@@ -424,5 +445,18 @@ public class MainController {
         } catch (IOException e) {
             // Ignore socket closure exceptions
         }
+    }
+
+    private String formatFileSize(long bytes) {
+        if (bytes < 0) {
+            return "Unknown";
+        }
+        if (bytes < 1024) {
+            return bytes + " B";
+        }
+        if (bytes < 1024 * 1024) {
+            return String.format("%.1f KB", bytes / 1024.0);
+        }
+        return String.format("%.1f MB", bytes / (1024.0 * 1024.0));
     }
 }

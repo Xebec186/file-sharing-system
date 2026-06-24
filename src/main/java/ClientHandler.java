@@ -81,11 +81,13 @@ public class ClientHandler implements Runnable {
             serverFolder.mkdir();
         }
         File[] files = serverFolder.listFiles();
-        List<String> fileNames = List.of();
+        List<String> fileInfo = List.of();
         if (files != null) {
-            fileNames = Arrays.stream(files).map(File::getName).toList();
+            fileInfo = Arrays.stream(files)
+                .map(f -> f.getName() + ":" + f.length())
+                .toList();
         }
-        dataOutputStream.writeUTF(fileNames.toString());
+        dataOutputStream.writeUTF(fileInfo.toString());
     }
 
     private void sendFile() throws IOException {
