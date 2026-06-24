@@ -28,6 +28,9 @@ public class Server {
                     case "LIST":
                         sendFileNames();
                         break;
+                    case "DOWNLOAD":
+                        sendFile();
+                        break;
                     default:
                         System.out.println("Client sent invalid option.");
                         dataOutputStream.writeUTF("Invalid option. Valid options are UPLOAD, LIST, DOWNLOAD, EXIT");
@@ -110,6 +113,27 @@ public class Server {
             dataOutputStream.writeUTF(fileNames.toString());
         } catch (IOException e) {
             System.out.println("An error occurred in sending file names: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void sendFile() {
+        try {
+            String fileName = dataInputStream.readUTF();
+            File file = new File("server/" + fileName);
+            if(!file.exists()) {
+                dataOutputStream.writeUTF("File does not exist on server with name: " + fileName);
+                return;
+            }
+
+            FileInputStream fileInputStream = new FileInputStream(file);
+            byte[] fileBytes = fileInputStream.readAllBytes();
+            dataOutputStream.writeInt((int) file.length());
+            dataOutputStream.write(fileBytes);
+
+            fileInputStream.close();
+        } catch (IOException e) {
+            System.out.println("An error occurred in sending file to client: " + e.getMessage());
             e.printStackTrace();
         }
     }

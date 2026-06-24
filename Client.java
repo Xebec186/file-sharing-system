@@ -109,6 +109,41 @@ public class Client {
     }
 
     private static void downloadFile(String fileName) {
-        
+        try {
+            dataOutputStream.writeUTF("DOWNLOAD");
+            dataOutputStream.writeUTF(fileName);
+
+            File file = new File("client/" + fileName);
+            File clientFolder = file.getParentFile();
+            if(!clientFolder.exists()) {
+               boolean isFolderCreated = clientFolder.mkdirs();
+               if(!isFolderCreated) {
+                   return;
+               }
+            }
+            file.createNewFile();
+
+
+            try(FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+                byte[] buffer = new byte[4096];
+                int fileLength = dataInputStream.readInt();
+                int totalBytesRead = 0;
+
+                while(totalBytesRead < fileLength) {
+                    int bytesToRead = Math.min(buffer.length, fileLength - totalBytesRead);
+                    int bytesRead = dataInputStream.read(buffer, 0, bytesToRead);
+                    if(bytesRead == -1) {
+                        return;
+                    }
+                    fileOutputStream.write(buffer, 0, bytesRead);
+                    totalBytesRead += bytesRead;
+                }
+            }
+
+            System.out.println("File successfully downloaded to " + file.getAbsolutePath());
+        } catch (IOException e) {
+            System.out.println("An error occurred in downloading file: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
