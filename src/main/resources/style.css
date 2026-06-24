@@ -1,0 +1,231 @@
+/* modern light styling for JavaFX File Share System Client - Emerald Clean Theme */
+
+.root-pane {
+    -fx-background-color: #f3f4f6;
+    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+/* Colors and Fonts */
+.top-bar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 0 0 1 0;
+}
+
+.center-panel {
+    -fx-background-color: #f3f4f6;
+}
+
+.bottom-bar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1 0 0 0;
+}
+
+.app-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #059669; /* Emerald Green */
+}
+
+.field-label, .search-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #4b5563; /* gray-600 */
+    -fx-font-weight: bold;
+}
+
+/* Text Fields */
+.server-input, .search-input {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #1f2937; /* gray-800 */
+    -fx-prompt-text-fill: #9ca3af; /* gray-400 */
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-border-color: #d1d5db; /* gray-300 */
+    -fx-border-width: 1;
+    -fx-padding: 6 10;
+}
+
+.server-input:focused, .search-input:focused {
+    -fx-border-color: #059669;
+    -fx-background-color: #ffffff;
+}
+
+/* Buttons */
+.btn {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 8 16;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-text-fill: #ffffff;
+}
+
+.btn-primary {
+    -fx-background-color: #059669; /* Emerald Primary */
+}
+
+.btn-primary:hover {
+    -fx-background-color: #10b981;
+}
+
+.btn-primary:pressed {
+    -fx-background-color: #047857;
+}
+
+.btn-secondary {
+    -fx-background-color: #4b5563; /* Gray Neutral */
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #374151;
+}
+
+.btn-success {
+    -fx-background-color: #0d9488; /* Teal Success */
+}
+
+.btn-success:hover {
+    -fx-background-color: #14b8a6;
+}
+
+.btn-success:pressed {
+    -fx-background-color: #0f766e;
+}
+
+.btn-action {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d1d5db;
+    -fx-border-width: 1;
+    -fx-text-fill: #4b5563;
+}
+
+.btn-action:hover {
+    -fx-background-color: #f9fafb;
+}
+
+.btn:disabled {
+    -fx-opacity: 0.4;
+    -fx-cursor: default;
+}
+
+/* Status Badges */
+.status-badge {
+    -fx-padding: 4 10;
+    -fx-background-radius: 12;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+}
+
+.status-disconnected {
+    -fx-background-color: rgba(220, 38, 38, 0.1);
+    -fx-text-fill: #dc2626;
+    -fx-border-color: #fecaca;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.status-connected {
+    -fx-background-color: rgba(5, 150, 105, 0.1);
+    -fx-text-fill: #059669;
+    -fx-border-color: #a7f3d0;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+/* Tables */
+.files-table {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+    -fx-padding: 2;
+}
+
+.files-table:disabled {
+    -fx-opacity: 0.6;
+}
+
+.files-table .column-header-background {
+    -fx-background-color: #f9fafb;
+    -fx-background-radius: 6 6 0 0;
+}
+
+.files-table .column-header {
+    -fx-background-color: transparent;
+    -fx-size: 35px;
+}
+
+.files-table .column-header .label {
+    -fx-text-fill: #4b5563;
+    -fx-font-weight: bold;
+}
+
+.files-table .table-row-cell {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #1f2937;
+    -fx-cell-size: 35px;
+}
+
+.files-table .table-row-cell:even {
+    -fx-background-color: #f9fafb;
+}
+
+.files-table .table-row-cell:selected {
+    -fx-background-color: #d1fae5; /* Soft Emerald Highlight */
+    -fx-text-fill: #065f46;
+}
+
+.files-table .table-cell {
+    -fx-text-fill: #374151;
+    -fx-border-width: 0;
+}
+
+.files-table .table-row-cell:selected .table-cell {
+    -fx-text-fill: #065f46;
+    -fx-font-weight: bold;
+}
+
+.table-placeholder {
+    -fx-text-fill: #9ca3af;
+    -fx-font-size: 13px;
+}
+
+/* Scroll Bars styling */
+.files-table .scroll-bar:vertical,
+.files-table .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.files-table .scroll-bar:vertical .thumb,
+.files-table .scroll-bar:horizontal .thumb {
+    -fx-background-color: #d1d5db;
+    -fx-background-radius: 4;
+}
+
+.files-table .scroll-bar:vertical .thumb:hover,
+.files-table .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: #9ca3af;
+}
+
+/* Progress Bar */
+.action-progress {
+    -fx-pref-height: 8px;
+}
+
+.action-progress .track {
+    -fx-background-color: #e5e7eb;
+    -fx-background-radius: 4;
+}
+
+.action-progress .bar {
+    -fx-background-color: linear-gradient(to right, #059669, #0d9488);
+    -fx-background-radius: 4;
+}
+
+/* Status Text */
+.status-text {
+    -fx-text-fill: #4b5563;
+    -fx-font-size: 12px;
+}

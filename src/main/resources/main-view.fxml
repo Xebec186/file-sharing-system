@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="550.0" prefWidth="750.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="MainController">
+    
+    <!-- Top Bar: Connection Controls and Status -->
+    <top>
+        <VBox spacing="10.0" styleClass="top-bar">
+            <padding>
+                <Insets bottom="12.0" left="16.0" right="16.0" top="16.0" />
+            </padding>
+            
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <Label styleClass="app-title" text="FILE SHARE" />
+                <Region HBox.hgrow="ALWAYS" />
+                
+                <Label text="Server:" styleClass="field-label" />
+                <TextField fx:id="serverAddressField" prefWidth="150.0" text="localhost:4000" styleClass="server-input" />
+                <Button fx:id="connectButton" onAction="#handleConnect" styleClass="btn, btn-primary" text="Connect" />
+                <Button fx:id="newWindowButton" onAction="#handleNewWindow" styleClass="btn, btn-secondary" text="New Client" />
+            </HBox>
+            
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <Label fx:id="connectionStatusLabel" styleClass="status-badge, status-disconnected" text="Disconnected" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button fx:id="refreshButton" disable="true" onAction="#handleRefresh" styleClass="btn, btn-action" text="🔄 Refresh Files" />
+            </HBox>
+        </VBox>
+    </top>
+    
+    <!-- Center Panel: Files List and Search -->
+    <center>
+        <VBox spacing="12.0" styleClass="center-panel">
+            <padding>
+                <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
+            </padding>
+            
+            <HBox alignment="CENTER_LEFT" spacing="8.0">
+                <Label styleClass="search-label" text="Search:" />
+                <TextField fx:id="searchField" promptText="Filter files by name..." styleClass="search-input" HBox.hgrow="ALWAYS" />
+            </HBox>
+            
+            <TableView fx:id="fileTable" disable="true" styleClass="files-table" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="fileNameColumn" prefWidth="450.0" text="File Name" />
+                    <TableColumn fx:id="fileSizeColumn" prefWidth="150.0" text="Size" />
+                </columns>
+                <placeholder>
+                    <Label styleClass="table-placeholder" text="No files available. Connect and refresh list." />
+                </placeholder>
+            </TableView>
+            
+            <HBox spacing="12.0">
+                <Button fx:id="uploadButton" disable="true" onAction="#handleUpload" styleClass="btn, btn-success" text="📤 Upload File..." HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                <Button fx:id="downloadButton" disable="true" onAction="#handleDownload" styleClass="btn, btn-primary" text="📥 Download Selected" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+            </HBox>
+        </VBox>
+    </center>
+    
+    <!-- Bottom Panel: Progress and Feedback -->
+    <bottom>
+        <VBox spacing="8.0" styleClass="bottom-bar">
+            <padding>
+                <Insets bottom="16.0" left="16.0" right="16.0" top="12.0" />
+            </padding>
+            
+            <ProgressBar fx:id="progressBar" maxWidth="Infinity" progress="0.0" styleClass="action-progress" />
+            <Label fx:id="statusLabel" styleClass="status-text" text="Idle" />
+        </VBox>
+    </bottom>
+</BorderPane>

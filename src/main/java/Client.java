@@ -2,9 +2,13 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
 
+/**
+ * Client is a Command Line Interface (CLI) application for communicating with the
+ * file-sharing Server, allowing users to list, upload, and download files.
+ */
 public class Client {
 
-    // 50 MB Limit (50 * 1024 * 1024 bytes)
+    // 50 MB Limit (50 * 1024 * 1024 bytes) for uploads to protect server storage
     private static final int MAX_FILE_SIZE = 50 * 1024 * 1024;
 
     static Scanner scanner = null;
@@ -15,6 +19,7 @@ public class Client {
     public static void main(String[] args) {
         System.out.println("Connecting to server...");
         try {
+            // Establish TCP connection to server on port 4000
             socket = new Socket("localhost", 4000);
             dataOutputStream = new DataOutputStream(socket.getOutputStream());
             dataInputStream = new DataInputStream(socket.getInputStream());
@@ -23,11 +28,17 @@ public class Client {
             scanner = new Scanner(System.in);
             int userChoice = 0;
 
+            // Simple event loop for CLI menu options
             while(userChoice != 3) {
                 displayMenu();
-                userChoice = scanner.nextInt();
+                if (scanner.hasNextInt()) {
+                    userChoice = scanner.nextInt();
+                } else {
+                    scanner.next(); // Consume invalid non-integer input
+                    userChoice = 0;
+                }
 
-                // clear \n in buffer
+                // Consume trailing newline in input buffer
                 scanner.nextLine();
 
                 switch (userChoice) {
@@ -45,6 +56,7 @@ public class Client {
                         }
                         break;
                     case 3:
+                        // Notify the server about disconnection and release socket
                         dataOutputStream.writeUTF("EXIT");
                         dataOutputStream.close();
                         socket.close();
@@ -67,6 +79,9 @@ public class Client {
         System.out.print("Enter choice: ");
     }
 
+    /**
+     * Sends the LIST command to the server and prints the returned raw file array string.
+     */
     private static void listServerFiles() {
         try {
             dataOutputStream.writeUTF("LIST");
@@ -76,7 +91,14 @@ public class Client {
         }
     }
 
-
+    /**
+     * Uploads a local file to the server.
+     * Protocol sent:
+     * 1. String: "UPLOAD"
+     * 2. String: fileName
+     * 3. int: fileLength
+     * 4. raw bytes: file payload
+     */
     private static void uploadFile(String path) {
         File file = new File(path);
         if(!file.exists() || !file.isFile()) {
@@ -91,12 +113,12 @@ public class Client {
         }
 
         try {
-            // send header
+            // Write upload headers
             dataOutputStream.writeUTF("UPLOAD");
             dataOutputStream.writeUTF(file.getName());
             dataOutputStream.writeInt((int) file.length());
 
-            // stream actual file content
+            // Stream actual file bytes
             try (FileInputStream fileInput = new FileInputStream(file)) {
                 byte[] buffer = new byte[4096];
                 int bytesRead;
@@ -112,6 +134,13 @@ public class Client {
         }
     }
 
+    /**
+     * Downloads a file from the server and saves it in a dedicated client directory.
+     * Protocol:
+     * 1. Write String "DOWNLOAD" and String fileName
+     * 2. Read int fileLength (-1 if not exists)
+     * 3. Stream incoming bytes if found
+     */
     private static void downloadFile(String fileName) {
         try {
             dataOutputStream.writeUTF("DOWNLOAD");
@@ -123,6 +152,7 @@ public class Client {
                 return;
             }
 
+            // Save inside a folder unique to this connection port (e.g. client_63686)
             File file = new File("client_" + socket.getLocalPort() + "/" + fileName);
             File clientFolder = file.getParentFile();
             if(!clientFolder.exists()) {
@@ -133,7 +163,7 @@ public class Client {
             }
             file.createNewFile();
 
-
+            // Stream the bytes from network stream to the local file output stream
             try(FileOutputStream fileOutputStream = new FileOutputStream(file)) {
                 byte[] buffer = new byte[4096];
                 int totalBytesRead = 0;
