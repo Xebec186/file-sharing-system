@@ -240,33 +240,38 @@ public class MainController {
     private void handleUpload(ActionEvent event) {
         if (!connected) return;
 
+        // Display a file chooser to let the user select a file to upload
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select File to Upload");
         File file = fileChooser.showOpenDialog(stage);
 
         if (file == null) {
-            return; // Cancelled
+            return; // Upload cancelled by the user
         }
 
+        // Enforce the upload limit
         if (file.length() > MAX_FILE_SIZE) {
             showErrorAlert("Upload Failed", "File size exceeds the maximum limit of 50 MB.");
             return;
         }
 
-        // Disable buttons during upload
+        // Disable interactive buttons during upload to prevent simultaneous actions
         setActionsDisabled(true);
 
+        // Define a JavaFX Task to run the network I/O upload process in a background thread
         Task<Void> uploadTask = new Task<>() {
             @Override
             protected Void call() throws Exception {
                 updateMessage("Preparing to upload " + file.getName() + "...");
                 updateProgress(0, 100);
 
+                // Write the upload headers (Command -> Name -> Length)
                 dataOutputStream.writeUTF("UPLOAD");
                 dataOutputStream.writeUTF(file.getName());
                 dataOutputStream.writeInt((int) file.length());
                 dataOutputStream.flush();
 
+                // Stream the file bytes to the output socket stream in chunks of 4KB
                 try (FileInputStream fileInput = new FileInputStream(file)) {
                     byte[] buffer = new byte[4096];
                     int bytesRead;
@@ -277,6 +282,7 @@ public class MainController {
                         dataOutputStream.write(buffer, 0, bytesRead);
                         totalBytesRead += bytesRead;
                         
+                        // Dynamically update Task properties for UI progress reporting
                         updateProgress(totalBytesRead, fileLength);
                         updateMessage("Uploading " + file.getName() + "... (" + (totalBytesRead / 1024) + " KB / " + (fileLength / 1024) + " KB)");
                     }
@@ -286,18 +292,21 @@ public class MainController {
             }
         };
 
+        // Bind the UI progress bar and status label to the background task properties
         progressBar.progressProperty().bind(uploadTask.progressProperty());
         statusLabel.textProperty().bind(uploadTask.messageProperty());
 
+        // Restore UI state and refresh the file table once the task completes successfully
         uploadTask.setOnSucceeded(e -> {
             progressBar.progressProperty().unbind();
             statusLabel.textProperty().unbind();
             progressBar.setProgress(0.0);
             statusLabel.setText("File uploaded successfully: " + file.getName());
             setActionsDisabled(false);
-            handleRefresh(null); // Refresh lists
+            handleRefresh(null); // Refresh the remote file lists
         });
 
+        // Restore UI state and display error notification on task failure
         uploadTask.setOnFailed(e -> {
             progressBar.progressProperty().unbind();
             statusLabel.textProperty().unbind();
@@ -307,6 +316,7 @@ public class MainController {
             showErrorAlert("Upload Error", "Failed to upload file:\n" + uploadTask.getException().getMessage());
         });
 
+        // Run the task on a new background thread to keep the JavaFX UI responsive
         new Thread(uploadTask).start();
     }
 
