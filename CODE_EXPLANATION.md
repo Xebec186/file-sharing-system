@@ -35,7 +35,7 @@ The system follows a classic **Client-Server Architecture**. Below is a visual r
 
 ![Architecture Diagram](images/architecture_diagram.jpg)
 
-Alternatively, here is the raw Mermaid code diagram:
+Alternatively, here is the Mermaid diagram:
 
 ```mermaid
 ---
